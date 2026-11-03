@@ -15,7 +15,7 @@ It fails closed unless the feed is live Kraken, the quote is no more than 15 sec
 
 ## Validation status
 
-CI covers Python unit tests and lint, research-model contracts, PDA feed-gate contracts, autopilot entry/exit/persistence/venue/freshness checks, monitor contracts, JavaScript syntax checks, and a Playwright browser smoke test for both account modes and OCR runtime. CI is not a substitute for a real-device screenshot import check. The pinned Tesseract runtime and English language data have been restored, and the Playwright browser smoke test successfully initializes OCR and processes a blank PNG. A real Kraken screenshot still needs manual device validation.
+CI covers Python unit tests and lint, research-model contracts, PDA feed-gate contracts, autopilot entry/exit/persistence/venue/freshness checks, monitor contracts, JavaScript syntax checks, and a Playwright browser smoke test for desktop and iPhone-sized viewports, both account modes, autopilot pause behavior, and OCR runtime. CI is not a substitute for a real-device screenshot import check. The pinned Tesseract runtime and English language data have been restored, and the Playwright browser smoke test successfully initializes OCR and processes a blank PNG. A real Kraken screenshot still needs manual device validation.
 
 ## Next engineering gates
 

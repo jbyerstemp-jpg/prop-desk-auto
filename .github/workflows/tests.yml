@@ -27,6 +27,7 @@ jobs:
       - run: node tests/pda-engine.test.js
       - run: node tests/monitor.test.js
       - run: node tests/pda-autopilot.test.js
+      - run: node --check monitor/run.js
       - run: node --check js/app.js
       - run: node --check js/pda-autopilot.js
       - run: npm install --no-save playwright
