@@ -126,7 +126,6 @@ class SolanaRpcClient:
         except (KeyError, TypeError, ValueError, ArithmeticError) as exc:
             raise SolanaRpcError("Solana RPC token supply response is invalid") from exc
 
-
     def get_token_account_balance(self, account: str) -> TokenBalance:
         if not account.strip():
             raise ValueError("token account address is required")
@@ -158,7 +157,8 @@ class SolanaRpcClient:
             values = result["value"]
             if not isinstance(values, list) or len(values) != len(addresses):
                 raise TypeError("account result count does not match request")
-            return tuple(self._decode_account(address, value, slot) for address, value in zip(addresses, values, strict=True))
+            decoded = (self._decode_account(address, value, slot) for address, value in zip(addresses, values, strict=True))
+            return tuple(decoded)
         except SolanaRpcError:
             raise
         except (KeyError, TypeError, ValueError) as exc:
