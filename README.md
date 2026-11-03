@@ -10,7 +10,16 @@ PDA is a research-first, dual-market trading platform for Kraken (centralized ex
 - Paper fills model fees and configurable slippage; they are simulations, not evidence of real-world execution quality.
 - Never fund an unvalidated strategy. Backtests and paper results do not guarantee future performance.
 
-## Initial architecture
+## App architecture
+
+- `index.html`, `css/app.css`, and `js/app.js`: standalone cloned interface.
+- `js/feed.js`: public Kraken spot/futures data with explicitly labeled Coinbase fallback and synthetic demo mode.
+- `js/pda-engine.js`: read-only data-quality/provenance gate for the research model.
+- `js/pda-autopilot.js`: separate Personal Capital browser-session paper engine; never sends venue orders.
+- `monitor/`: copied scorecard, traits, and market-profile data used by the existing app.
+- `vendor/tesseract/`: pinned OCR runtime and English trained data for screenshot import.
+
+## Initial Python architecture
 
 - `src/pda/models.py`: normalized market and order data contracts.
 - `src/pda/risk.py`: deterministic pre-trade risk gates.
@@ -18,7 +27,7 @@ PDA is a research-first, dual-market trading platform for Kraken (centralized ex
 - `src/pda/strategy.py`: baseline momentum signal generator.
 - `tests/`: unit tests for safety and accounting invariants.
 
-Future adapters will ingest public Kraken and Solana DEX market data into the same normalized contracts. Venue-specific execution remains out of scope until paper validation, security review, and explicit operator approval.
+The UI currently has separate Prop Evaluation (manual planning/journaling) and Personal Capital (isolated paper-only) workspaces. The personal autopilot is experimental and runs only while the browser app is open. Future adapters will ingest public Kraken and Solana DEX market data into the same normalized contracts. Venue-specific execution remains out of scope until paper validation, security review, and explicit operator approval.
 
 ## Quick start
 
