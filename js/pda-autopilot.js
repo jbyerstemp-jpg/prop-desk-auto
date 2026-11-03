@@ -23,7 +23,7 @@
     if (!feed || typeof feed.candles !== 'function') throw new Error('A market feed is required');
     const store = storage || root.localStorage;
     const read = () => { try { return JSON.parse(store.getItem(KEY)) || {}; } catch (_) { return {}; } };
-    let state = Object.assign({ config: Object.assign({}, DEFAULTS), open: null, closed: [], events: [], lastSignalBar: null }, read());
+    let state = Object.assign({ config: Object.assign({}, DEFAULTS), open: null, closed: [], events: [], lastSignalBar: null, gateStatus: 'paused' }, read());
     state.config = Object.assign({}, DEFAULTS, state.config || {});
     const persist = () => { try { store.setItem(KEY, JSON.stringify(state)); } catch (_) { state.config.enabled = false; } };
     const dayKey = () => new Date(clock()).toISOString().slice(0, 10);
@@ -31,7 +31,7 @@
     const todayPnl = () => todayTrades().reduce((sum, t) => sum + t.netPnl, 0) + (state.open ? state.open.unrealized || 0 : 0);
     const equity = () => state.config.capital + state.closed.reduce((sum, t) => sum + t.netPnl, 0) + (state.open ? state.open.unrealized || 0 : 0);
     function snapshot() {
-      return JSON.parse(JSON.stringify({ config: state.config, open: state.open, closed: state.closed.slice(-100), events: state.events.slice(-20),
+      return JSON.parse(JSON.stringify({ config: state.config, open: state.open, closed: state.closed.slice(-100), events: state.events.slice(-20), gateStatus: state.gateStatus,
         equity: round(equity()), realizedPnl: round(state.closed.reduce((s, t) => s + t.netPnl, 0)), todayPnl: round(todayPnl()) }));
     }
     function configure(values) {
@@ -46,6 +46,7 @@
     }
     function setEnabled(enabled) {
       state.config.enabled = !!enabled;
+      state.gateStatus = enabled ? 'checking' : 'paused';
       state.events.push({ at: clock(), type: enabled ? 'paper_autopilot_enabled' : 'paper_autopilot_paused' });
       persist(); return snapshot();
     }
@@ -62,16 +63,20 @@
       state.open = null; persist();
     }
     function tick() {
-      if (!state.config.enabled) return snapshot();
+      if (!state.config.enabled) { state.gateStatus = 'paused'; return snapshot(); }
       const now = clock(), sym = state.config.symbol;
       const source = String(feed.source || '');
-      if (feed.demo || feed.status !== 'live' || source !== 'Kraken') return snapshot();
+      if (feed.demo || feed.status === 'demo') { state.gateStatus = 'demo_blocked'; return snapshot(); }
+      if (/coinbase|fallback/i.test(source) || feed.status === 'fallback') { state.gateStatus = 'fallback_blocked'; return snapshot(); }
+      if (source !== 'Kraken' || feed.status !== 'live') { state.gateStatus = 'feed_not_live'; return snapshot(); }
       const quote = typeof feed.quote === 'function' ? feed.quote(sym) : null;
       const quoteAge = typeof feed.age === 'function' ? feed.age(sym) : null;
       const candleAge = typeof feed.candleAge === 'function' ? feed.candleAge(sym, 15) : null;
-      if (!quote || !(quote.ask > 0 && quote.bid > 0) || quoteAge == null || quoteAge > 15 || candleAge == null || candleAge > 120) return snapshot();
+      if (!quote || !(quote.ask > 0 && quote.bid > 0) || quoteAge == null || quoteAge > 15) { state.gateStatus = 'quote_stale'; return snapshot(); }
+      if (candleAge == null || candleAge > 120) { state.gateStatus = 'candles_stale'; return snapshot(); }
       const rows = feed.candles(sym, 15);
-      if (!Array.isArray(rows) || rows.length < 60) return snapshot();
+      if (!Array.isArray(rows) || rows.length < 60) { state.gateStatus = 'warming_up'; return snapshot(); }
+      state.gateStatus = 'ready';
       const bars = rows.slice(0, -1).filter(b => [b.time,b.open,b.high,b.low,b.close].every(Number.isFinite));
       if (bars.length < 50) return snapshot();
       const closes = bars.map(b => b.close), last = bars[bars.length - 1];
@@ -103,7 +108,7 @@
       state.events.push({ at: now, type: 'paper_position_opened', strategy: 'ema9_21_atr2_long_experimental' });
       persist(); return snapshot();
     }
-    const api = { snapshot, configure, setEnabled, tick, reset() { state = { config: Object.assign({}, DEFAULTS), open: null, closed: [], events: [], lastSignalBar: null }; persist(); return snapshot(); } };
+    const api = { snapshot, configure, setEnabled, tick, reset() { state = { config: Object.assign({}, DEFAULTS), open: null, closed: [], events: [], lastSignalBar: null, gateStatus: 'paused' }; persist(); return snapshot(); } };
     // The app owns scheduling so the personal engine cannot run while Prop Evaluation is selected.
     return api;
   }
