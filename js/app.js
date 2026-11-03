@@ -1145,6 +1145,26 @@
     t.onChart = cb.checked; save(); renderAll(true);
   });
   $('#paperBox').addEventListener('click', e => {
+    const mode = e.target.closest('[data-pda-mode]');
+    if (mode) {
+      T().accountMode = mode.dataset.pdaMode;
+      if (T().accountMode === 'prop_evaluation' && pdaAuto) pdaAuto.setEnabled(false);
+      save();
+      if (T().accountMode === 'personal_capital' && pdaAuto) F.want(pdaAuto.snapshot().config.symbol, [15]).catch(() => {});
+      renderPaper(); return;
+    }
+    if (e.target.id === 'pdaSave' && pdaAuto) {
+      try {
+        pdaAuto.configure({ capital: +$('#pdaCapital').value, riskPct: +$('#pdaRisk').value, dailyLossPct: +$('#pdaDaily').value, symbol: $('#pdaSymbol').value });
+        $('#pdaStatus').textContent = 'Saved.'; renderPaper();
+      } catch (err) { $('#pdaStatus').textContent = err.message; }
+      return;
+    }
+    if (e.target.id === 'pdaToggle' && pdaAuto) {
+      const cfg = pdaAuto.snapshot().config;
+      if (!cfg.enabled && !confirm('Enable autonomous PAPER trading only? This will not place real orders.')) return;
+      pdaAuto.setEnabled(!cfg.enabled); F.want(cfg.symbol, [15]).catch(() => {}); renderPaper(); return;
+    }
     const all = e.target.closest('[data-pall]');
     if (all) { for (const t of S.paper.filter(x => x.status === 'open' || x.status === 'pending')) t.onChart = all.dataset.pall === '1'; save(); renderAll(true); return; }
     const sb = e.target.closest('[data-score]');
