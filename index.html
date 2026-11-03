@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<title>PDA — Prop Desk Autonomous</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">PDA <span class="muted">· Prop Desk Autonomous</span></div>
+  <div class="feed" id="feedPill" title="Data source and age">connecting…</div>
+  <button class="btn sm" id="refreshBtn" title="Reload candles and reconnect">↻ Refresh</button>
+  <button class="btn sm" id="helpBtn" title="How to use this app, questions and comments">? Help</button>
+  <div class="reset" id="resetPill" title="Daily loss limit resets 00:30 UTC (Kraken Prop rule; check your firm)"></div>
+</header>
+<div class="banner" id="banner" hidden></div>
+<button class="banner upd" id="updBar" hidden>A new version is ready (the model may have improved). Tap to update.</button>
+<nav class="tabs" id="tabs">
+  <button data-tab="chart" class="on">Chart</button>
+  <button data-tab="desk">Desk</button>
+  <button data-tab="pos">Positions</button>
+  <button data-tab="coach">Coach</button>
+  <button data-tab="paper">Paper</button>
+  <button data-tab="set">Settings</button>
+  <button data-tab="help" hidden>Help</button>
+</nav>
+
+<main>
+<section id="tab-chart" class="tab on">
+  <div class="chartbar">
+    <select id="symSel"></select>
+    <div class="seg" id="tfSeg"></div>
+    <div class="row" id="layerSeg" style="margin:0"></div>
+    <button class="btn sm" id="fsBtn">⛶ Full screen</button>
+    <button class="btn sm" id="missBtn" title="Ask the coach: mark a move on the chart and see what was visible before it">🔍 What did I miss?</button>
+  </div>
+  <div class="small" id="missHint" hidden style="margin:4px 0;padding:6px 8px;border:1px solid var(--line,#333);border-radius:6px"></div>
+  <div class="chartwrap" id="chartWrap">
+    <div id="chart"></div>
+    <canvas id="overlay"></canvas>
+    <div class="small" id="haNote" hidden style="position:absolute;left:6px;bottom:34px;z-index:3;background:rgba(0,0,0,.75);padding:2px 6px;border-radius:4px;font-size:11px">Heikin Ashi view · candles are averaged · "Price" line = real price</div>
+    <div class="fsinfo" id="fsInfo"></div>
+    <button class="btn sm fsx" id="fsExit">✕ Exit</button>
+    <div class="small fsx fsw" id="fsWake"></div>
+    <button class="btn sm fsx fsm" id="fsMiss">🔍 Coach</button>
+    <div class="small fsx fsh" id="missHintFs" hidden></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Structure &amp; bias <span class="muted small" id="biasAsOf"></span></h3><div id="biasBox"></div></div>
+    <div class="card"><h3>Levels</h3><div id="levelBox"></div></div>
+    <div class="card"><h3>Open fair value gaps</h3><div id="fvgBox"></div></div>
+    <div class="card"><h3>Live data check</h3><div id="dataBox"></div></div>
+    <div class="card"><h3>Market open plan <span class="tag">9:30 New York · both sides prepared · untested idea</span></h3><div id="openBox"><p class=mu>Loading…</p></div></div>
+    <div class="card"><h3>Trade ideas <span class="tag">short-term or long-term, graded against the model</span></h3><div id="scanAllBox"><p class=mu>Starting…</p></div></div>
+    <div class="card"><h3>Setups to watch <span class="tag">untested idea, not a signal</span></h3><div id="setupBox"></div></div>
+    <div class="card"><h3>Market profile now <span class="tag">past hours like this one</span></h3><div id="profileBox"><p class=mu>Loading…</p></div></div>
+    <div class="card"><h3>Momentum &amp; context traits <span class="tag">graded, you choose</span></h3><div id="traitBox"><p class=mu>Loading…</p></div></div>
+    <div class="card"><h3>Track record <span class="tag">replay test, past data</span></h3><div id="trackBox"><p class=mu>Loading…</p></div></div>
+    <div class="card"><h3>Impulse legs &amp; fib retracements <span class="tag">observation, not a signal</span></h3><div id="fibBox"></div></div>
+    <div class="card"><h3>What did I miss? <span class="tag">your marked moves, learning data</span></h3><div id="missBox"></div></div>
+    <div class="card"><h3>Research read <span class="tag">experimental, not a signal</span></h3><div id="researchBox"></div></div>
+  </div>
+</section>
+
+<section id="tab-desk" class="tab">
+  <div id="deskTotals" class="totals"></div>
+  <div class="row"><button class="btn" id="addAcct">+ Add prop account</button></div>
+  <div id="deskList"></div>
+</section>
+
+<section id="tab-pos" class="tab">
+  <div class="card" id="importCard">
+    <h3>Add trades from a screenshot <span class="tag">main way · no typing</span></h3>
+    <p class="small mu">Best set: the <b>Portfolio</b> screen (balance, equity, limits, margin), the <b>positions list</b> (with Closed), each position's <b>TP/SL</b>, and <b>History → Trades</b> (exact fills). Only what changed is updated. Pick them all here. Screenshots are read on this phone and never uploaded. If the reader misses something, only the screen's layout is sent (every number replaced) to improve it; turn that off in Settings.</p>
+    <div class="row"><label class="btn pri" style="flex:1;text-align:center;font-size:16px;min-height:52px;display:flex;align-items:center;justify-content:center">📷 Import screenshots<input type="file" id="impFiles" accept="image/*" multiple hidden></label>
+      <button class="btn" id="impPasteBtn">Paste text</button></div>
+    <textarea id="impText" placeholder="…or paste text here" hidden></textarea>
+    <div id="impStatus" class="small"></div><div id="impPreview"></div>
+  </div>
+  <details class="card" id="manualBox"><summary><b>➕ Add a trade manually</b> <span class="small mu">(if a screenshot won't read)</span></summary><div id="posFormCard" style="margin-top:10px"></div></details>
+  <h3>Open positions</h3><div id="posOpen"></div>
+  <h3>Closed (journal)</h3><div id="posClosed"></div>
+</section>
+
+<section id="tab-coach" class="tab">
+  <div class="card"><h3>24/7 monitor</h3>
+    <p class="small mu">After you import screenshots, send the monitor a copy so it can watch your positions around the clock and alert your phone (ntfy) only when something changes.</p>
+    <div class="row"><button class="btn pri" id="sendMon">Send to monitor</button><span class="small" id="monStatus"></span></div></div>
+  <div class="row">
+    <button class="btn" id="copyClaude">Copy snapshot for Claude</button>
+    <label class="chk"><input type="checkbox" id="notifyChk"> Phone alert when a score drops to 2 or less (while the app is open)</label>
+  </div>
+  <div id="coachBox"></div>
+</section>
+
+<section id="tab-paper" class="tab"><div id="paperBox"></div></section>
+<section id="tab-set" class="tab"><div id="setBox"></div></section>
+<section id="tab-help" class="tab"><div id="helpBox"></div></section>
+</main>
+
+<div class="modal" id="modal" hidden><div class="modal-card" id="modalCard"></div></div>
+
+<script src="vendor/lightweight-charts.standalone.production.js"></script>
+<script src="js/core.js"></script>
+<script src="js/research-model.js"></script>
+<script src="js/research.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/traits.js"></script>
+<script src="js/review.js"></script>
+<script src="js/trend.js"></script>
+<script src="js/feed.js"></script>
+<script src="js/pda-engine.js"></script>
+<script src="js/pda-autopilot.js"></script>
+<script src="js/help.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

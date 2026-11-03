@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  push:
+    branches: ["main", "foundation/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e ".[dev,research]"
+      - run: pytest
+      - run: ruff check src tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: test -s vendor/tesseract/tesseract-core-lstm.wasm.js
+      - run: test -s vendor/tesseract/tesseract-core-simd-lstm.wasm.js
+      - run: gzip -t vendor/tesseract/lang/eng.traineddata.gz
+      - run: node tests/research-model.test.js
+      - run: node tests/pda-engine.test.js
+      - run: node tests/monitor.test.js
+      - run: node tests/pda-autopilot.test.js
+      - run: node --check monitor/run.js
+      - run: node --check js/app.js
+      - run: node --check js/pda-autopilot.js
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          python3 -m http.server 4173 > /tmp/pda-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 2
+          node tests/browser-smoke.js
