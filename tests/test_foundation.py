@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from pda.models import AssetTier, MarketSnapshot, OrderIntent, Side, Venue
@@ -8,7 +8,7 @@ from pda.strategy import MomentumStrategy
 
 
 def snapshot(price: str) -> MarketSnapshot:
-    return MarketSnapshot("SOL/USD", Venue.KRAKEN, AssetTier.ESTABLISHED, Decimal(price), datetime.now(timezone.utc), Decimal("500000"), Decimal("1000000"))
+    return MarketSnapshot("SOL/USD", Venue.KRAKEN, AssetTier.ESTABLISHED, Decimal(price), datetime.now(UTC), Decimal("500000"), Decimal("1000000"))
 
 
 def order(quantity: str = "1", price: str = "100") -> OrderIntent:
