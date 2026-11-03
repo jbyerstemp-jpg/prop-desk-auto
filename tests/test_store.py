@@ -1,4 +1,5 @@
-from datetime import UTC, datetime, timedelta
+from dataclasses import replace
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -60,7 +61,7 @@ def test_candle_record_rejects_bad_times_and_ranges() -> None:
             low=Decimal("99"), close=Decimal("103"), volume=Decimal(1), source="test",
         )
     with pytest.raises(ValueError, match="high/low"):
-        candle("103")
+        replace(candle(), low=Decimal("100.5"))
 
 
 def test_fetch_limit_is_bounded(tmp_path) -> None:
