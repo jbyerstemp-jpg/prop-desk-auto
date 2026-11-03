@@ -22,3 +22,4 @@ jobs:
           node-version: "22"
       - run: node tests/research-model.test.js
       - run: node tests/pda-engine.test.js
+      - run: node tests/pda-autopilot.test.js
