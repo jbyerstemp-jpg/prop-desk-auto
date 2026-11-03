@@ -39,7 +39,18 @@ function makeBlankPng(width, height) {
     const ocrStatus = await page.locator('#impStatus').innerText();
     assert.match(ocrStatus, /Nothing recognisable/, 'Tesseract must load and recognize a valid blank PNG; status=' + ocrStatus + '; console=' + browserLogs.join(' | '));
     assert.deepEqual(pageErrors, [], 'app must not throw uncaught browser errors');
-    console.log('PDA browser smoke: account modes, paper-only toggle, and OCR runtime passed');
+    const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+    const mobileErrors = [];
+    mobile.on('pageerror', error => mobileErrors.push(error.message));
+    await mobile.goto('http://127.0.0.1:4173/?demo', { waitUntil: 'domcontentloaded' });
+    await mobile.locator('[data-tab="paper"]').click();
+    await mobile.locator('[data-pda-mode="personal_capital"]').click();
+    assert.match(await mobile.locator('#paperBox').innerText(), /Separate personal-capital paper ledger/);
+    await mobile.locator('[data-pda-mode="prop_evaluation"]').click();
+    assert.match(await mobile.locator('#paperBox').innerText(), /Prop Evaluation mode/);
+    assert.deepEqual(mobileErrors, [], 'mobile layout must not throw uncaught browser errors');
+    await mobile.close();
+    console.log('PDA browser smoke: desktop + mobile account modes, paper-only toggle, and OCR runtime passed');
   } finally {
     await browser.close();
   }
