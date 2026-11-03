@@ -13,7 +13,7 @@
   const KEY = 'kpd_v1';
   const DEF = { accounts: [], positions: [], settings: { tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } })(), orbAnchor: 'ny', orbMin: 15, beAt1R: false,
     symbols: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'XRP/USD'], sym: 'BTC/USD', tf: 15, layers: { levels: true, fvg: true, sessions: true, orb: true, pos: true },
-    budget: 0, notify: false, maxAge: 90, priceBasis: 'usdt', v: 3, theme: 'green', hue: 135, scan: true, glow: true, chartStyle: 'tv' } };
+    budget: 0, notify: false, maxAge: 90, priceBasis: 'usdt', accountMode: 'prop_evaluation', v: 3, theme: 'green', hue: 135, scan: true, glow: true, chartStyle: 'tv' } };
   let S;
   try { S = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { S = {}; }
   const savedV = (S.settings && S.settings.v) || 0;
