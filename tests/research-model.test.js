@@ -44,7 +44,7 @@ const stream = (bars, extra = {}) => ({
 
 {
   const bars = makeBars();
-  bars[50].time += IV; // introduce a missing interval
+  for (let i = 50; i < bars.length; i++) bars[i].time += IV; // preserve order while leaving one missing interval
   const result = M.analyzeStream(stream(bars), { now: bars.at(-1).time + 1_000 });
   assert.equal(result.dataStatus, 'gap');
   assert.equal(result.gapDetected, true);
