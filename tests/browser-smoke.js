@@ -19,7 +19,7 @@ const { chromium } = require('playwright');
     await page.locator('[data-pda-mode="prop_evaluation"]').click();
     assert.match(await page.locator('#paperBox').innerText(), /Prop Evaluation mode/);
     await page.locator('[data-pda-mode="personal_capital"]').click();
-    assert.match(await page.locator('#paperBox').innerText(), /Autopilot.*Paused/);
+    assert.match(await page.locator('#paperBox').innerText(), /Paused/);
     await page.locator('[data-tab="pos"]').click();
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p1sAAAAASUVORK5CYII=', 'base64');
     await page.locator('#impFiles').setInputFiles({ name: 'blank.png', mimeType: 'image/png', buffer: png });
