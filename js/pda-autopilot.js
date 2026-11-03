@@ -89,7 +89,7 @@
         return snapshot();
       }
       if (todayPnl() <= -(state.config.capital * state.config.dailyLossPct / 100) || todayTrades().length >= state.config.maxTradesPerDay) {
-        state.config.enabled = false; state.events.push({ at: now, type: 'daily_guard_paused' }); persist(); return snapshot();
+        state.config.enabled = false; state.gateStatus = 'daily_loss_guard'; state.events.push({ at: now, type: 'daily_guard_paused' }); persist(); return snapshot();
       }
       const priorFast = ema(closes.slice(0, -1), 9), priorSlow = ema(closes.slice(0, -1), 21);
       const fastNow = ema(closes, 9), slowNow = ema(closes, 21), range = atr(bars);
