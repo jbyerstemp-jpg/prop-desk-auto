@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
 
 from pda.models import OrderIntent, PaperFill, Side, utc_now
 
