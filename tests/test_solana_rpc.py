@@ -64,3 +64,35 @@ def test_endpoint_must_be_https_and_no_write_api_is_exposed() -> None:
     client = SolanaRpcClient(transport=lambda _: {"result": "ok"})
     assert not hasattr(client, "send_transaction")
     assert not hasattr(client, "sign_transaction")
+
+
+def test_token_account_balance_and_multiple_account_batch() -> None:
+    raw = b"vault-state"
+    encoded = base64.b64encode(raw).decode()
+
+    def transport(payload: dict[str, object]) -> dict[str, object]:
+        if payload["method"] == "getTokenAccountBalance":
+            return {"result": {"context": {"slot": 101}, "value": {
+                "amount": "2500000", "decimals": 6, "uiAmountString": "2.5"
+            }}}
+        assert payload["method"] == "getMultipleAccounts"
+        return {"result": {"context": {"slot": 102}, "value": [
+            {"owner": "TokenProgram", "lamports": 10, "executable": False, "data": [encoded, "base64"]},
+            None,
+        ]}}
+
+    client = SolanaRpcClient(transport=transport)
+    balance = client.get_token_account_balance("VaultAddress")
+    assert balance.ui_amount == Decimal("2.5")
+    assert balance.slot == 101
+    accounts = client.get_multiple_accounts(["VaultAddress", "MissingAddress"])
+    assert accounts[0] is not None and accounts[0].data == raw
+    assert accounts[1] is None
+
+
+def test_multiple_accounts_rejects_unbounded_requests() -> None:
+    client = SolanaRpcClient(transport=lambda _: {"result": {}})
+    with pytest.raises(ValueError, match="1 and 100"):
+        client.get_multiple_accounts([])
+    with pytest.raises(ValueError, match="1 and 100"):
+        client.get_multiple_accounts(["A"] * 101)
