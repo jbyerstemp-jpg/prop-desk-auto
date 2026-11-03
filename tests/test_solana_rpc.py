@@ -6,6 +6,15 @@ import pytest
 from pda.solana_rpc import SolanaRpcClient, SolanaRpcError
 
 
+def test_health_and_slot_use_native_rpc_scalar_results() -> None:
+    def transport(payload: dict[str, object]) -> dict[str, object]:
+        return {"result": "ok" if payload["method"] == "getHealth" else 456}
+
+    client = SolanaRpcClient(transport=transport)
+    assert client.get_health() == "ok"
+    assert client.get_slot() == 456
+
+
 def test_token_supply_parses_exact_ui_amount_and_slot() -> None:
     def transport(payload: dict[str, object]) -> dict[str, object]:
         assert payload["method"] == "getTokenSupply"

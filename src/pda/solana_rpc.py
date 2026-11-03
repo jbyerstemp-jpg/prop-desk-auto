@@ -56,7 +56,7 @@ class SolanaRpcClient:
         self._transport = transport
         self._ids = count(1)
 
-    def _request(self, method: str, params: list[object] | None = None) -> dict[str, object]:
+    def _request(self, method: str, params: list[object] | None = None) -> object:
         payload: dict[str, object] = {
             "jsonrpc": "2.0",
             "id": next(self._ids),
@@ -85,13 +85,10 @@ class SolanaRpcClient:
         if "result" not in response:
             raise SolanaRpcError(f"Solana RPC {method} response has no result")
         result = response["result"]
-        if not isinstance(result, dict):
-            raise SolanaRpcError(f"Solana RPC {method} result is not an object")
         return result
 
     def get_health(self) -> str:
-        result = self._request("getHealth")
-        value = result.get("value")
+        value = self._request("getHealth")
         if not isinstance(value, str):
             raise SolanaRpcError("Solana RPC health response is invalid")
         return value
@@ -99,8 +96,8 @@ class SolanaRpcClient:
     def get_slot(self) -> int:
         result = self._request("getSlot", [{"commitment": "confirmed"}])
         try:
-            return int(result["value"]) if "value" in result else int(result)  # type: ignore[arg-type]
-        except (KeyError, TypeError, ValueError) as exc:
+            return int(result)
+        except (TypeError, ValueError) as exc:
             raise SolanaRpcError("Solana RPC slot response is invalid") from exc
 
     def get_token_supply(self, mint: str) -> TokenSupply:
@@ -108,6 +105,8 @@ class SolanaRpcClient:
             raise ValueError("mint address is required")
         result = self._request("getTokenSupply", [mint, {"commitment": "confirmed"}])
         try:
+            if not isinstance(result, dict):
+                raise TypeError("result must be an object")
             value = result["value"]
             context = result["context"]
             raw_amount = int(value["amount"])
@@ -123,6 +122,8 @@ class SolanaRpcClient:
             raise ValueError("account address is required")
         result = self._request("getAccountInfo", [address, {"encoding": "base64", "commitment": "confirmed"}])
         try:
+            if not isinstance(result, dict):
+                raise TypeError("result must be an object")
             context = result["context"]
             value = result["value"]
             if value is None:
