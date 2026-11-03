@@ -8,10 +8,10 @@ from pda.models import OrderIntent
 
 @dataclass(frozen=True, slots=True)
 class RiskLimits:
-    max_order_notional: Decimal = Decimal("100")
-    max_symbol_exposure: Decimal = Decimal("250")
-    max_daily_loss: Decimal = Decimal("50")
-    min_liquidity_usd: Decimal = Decimal("10000")
+    max_order_notional: Decimal = Decimal(100)
+    max_symbol_exposure: Decimal = Decimal(250)
+    max_daily_loss: Decimal = Decimal(50)
+    min_liquidity_usd: Decimal = Decimal(10000)
     max_reference_price_deviation: Decimal = Decimal("0.02")
 
 
@@ -31,10 +31,10 @@ class RiskEngine:
         self,
         order: OrderIntent,
         *,
-        current_symbol_exposure: Decimal = Decimal("0"),
-        realized_daily_pnl: Decimal = Decimal("0"),
+        current_symbol_exposure: Decimal = Decimal(0),
+        realized_daily_pnl: Decimal = Decimal(0),
         observed_price: Decimal | None = None,
-        liquidity_usd: Decimal = Decimal("0"),
+        liquidity_usd: Decimal = Decimal(0),
     ) -> RiskDecision:
         reasons: list[str] = []
         notional = order.quantity * order.reference_price
