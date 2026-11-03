@@ -19,21 +19,12 @@ jobs:
         with:
           ref: pda/app-clone-today
       - name: Restore pinned Tesseract runtime and English language data
-        env:
-          SOURCE_REV: ed3aafc7ba820bd2f2c347e3859f428060332667
         run: |
           set -euo pipefail
           dest="vendor/tesseract"
           mkdir -p "$dest/lang"
-          base="https://raw.githubusercontent.com/jbyerstemp-jpg/prop-desk/${SOURCE_REV}/vendor/tesseract"
-          files=(
-            "tesseract-core-lstm.wasm.js"
-            "tesseract-core-simd-lstm.wasm.js"
-            "lang/eng.traineddata.gz"
-            "LICENSE-tesseract-core"
-            "LICENSE-tesseract.js.md"
-          )
-          for file in "${files[@]}"; do
+          base="https://raw.githubusercontent.com/jbyerstemp-jpg/prop-desk/ed3aafc7ba820bd2f2c347e3859f428060332667/vendor/tesseract"
+          for file in tesseract-core-lstm.wasm.js tesseract-core-simd-lstm.wasm.js lang/eng.traineddata.gz LICENSE-tesseract-core LICENSE-tesseract.js.md; do
             if [ ! -s "$dest/$file" ]; then
               curl --fail --location --retry 3 --silent --show-error "$base/$file" -o "$dest/$file"
             fi
@@ -46,5 +37,5 @@ jobs:
           git add "$dest"
           if ! git diff --cached --quiet; then
             git commit -m "assets: restore pinned Tesseract OCR runtime"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            git push origin HEAD:pda/app-clone-today
           fi
