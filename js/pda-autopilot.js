@@ -104,7 +104,7 @@
       persist(); return snapshot();
     }
     const api = { snapshot, configure, setEnabled, tick, reset() { state = { config: Object.assign({}, DEFAULTS), open: null, closed: [], events: [], lastSignalBar: null }; persist(); return snapshot(); } };
-    if (typeof feed.on === 'function') feed.on(tick);
+    // The app owns scheduling so the personal engine cannot run while Prop Evaluation is selected.
     return api;
   }
   root.PDAAutoPaper = { create, VERSION: '0.1.0-experimental', DEFAULTS };
