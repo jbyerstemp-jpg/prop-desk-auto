@@ -5,8 +5,8 @@ Prop Desk sends alerts while it's open. To get them **even when your phone is lo
 **What you need:** a free GitHub account (https://github.com/signup) and the ntfy app with your private channel from Prop Desk → Settings → Phone alerts.
 
 ## 1. Make your own private copy
-1. Open https://github.com/jbyerstemp-jpg/prop-desk-auto and tap **Use this template → Create a new repository**.
-2. Name it `prop-desk-monitor`, choose **Private**, tap **Create repository**.
+1. Create a new empty repository named `prop-desk-monitor` and choose **Private**.
+2. Copy the PDA branch into it with Git (desktop or command line): `git clone --branch pda/app-clone-today https://github.com/jbyerstemp-jpg/prop-desk-auto.git prop-desk-monitor`, then inside that folder set the `origin` remote to your new private repository and push the checked-out branch to `main` (`git push -u origin HEAD:main`). This copies the monitor code and its dependencies. The sample `monitor/watch.json` is blank; do not copy a populated watch file from another account.
 
 ## 2. Tell it where to send alerts
 1. In your new repo: **Settings → Secrets and variables → Actions → New repository secret**.
