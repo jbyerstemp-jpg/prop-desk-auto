@@ -51,14 +51,14 @@ class DuckDBStore:
                 venue VARCHAR NOT NULL,
                 symbol VARCHAR NOT NULL,
                 timeframe VARCHAR NOT NULL,
-                open_time TIMESTAMPTZ NOT NULL,
+                open_time TIMESTAMP NOT NULL,
                 open_price DECIMAL(38, 18) NOT NULL,
                 high_price DECIMAL(38, 18) NOT NULL,
                 low_price DECIMAL(38, 18) NOT NULL,
                 close_price DECIMAL(38, 18) NOT NULL,
                 volume DECIMAL(38, 18) NOT NULL,
                 source VARCHAR NOT NULL,
-                ingested_at TIMESTAMPTZ NOT NULL,
+                ingested_at TIMESTAMP NOT NULL,
                 PRIMARY KEY (venue, symbol, timeframe, open_time)
             )
             """
@@ -70,14 +70,14 @@ class DuckDBStore:
                 record.venue.value,
                 record.symbol,
                 record.timeframe,
-                record.open_time.astimezone(UTC),
+                record.open_time.astimezone(UTC).replace(tzinfo=None),
                 record.open,
                 record.high,
                 record.low,
                 record.close,
                 record.volume,
                 record.source,
-                datetime.now(UTC),
+                datetime.now(UTC).replace(tzinfo=None),
             )
             for record in records
         ]
@@ -112,7 +112,7 @@ class DuckDBStore:
                 venue=Venue(row[0]),
                 symbol=row[1],
                 timeframe=row[2],
-                open_time=row[3],
+                open_time=row[3].replace(tzinfo=UTC),
                 open=Decimal(str(row[4])),
                 high=Decimal(str(row[5])),
                 low=Decimal(str(row[6])),
