@@ -1215,11 +1215,16 @@
   }
   // ---------- Research read (experimental engine, js/research.js): per timeframe, never one blended score ----------
   const research = {};
+  let pdaEngine = null;
   function researchFor(sym) {
     const r = research[sym];
     if (r && Date.now() - r.at < 60e3) return r;   // heavy: recompute at most once a minute per coin
     if (!window.PDResearch) return null;
-    try { research[sym] = PDResearch.read(sym, iv => F.candles(sym, iv), Date.now(), /coinbase/i.test(F.source) ? 'coinbase' : 'kraken'); } catch (e) { console.warn(e); }
+    try {
+      if (window.PDAEngine && !pdaEngine) pdaEngine = PDAEngine.create({ feed: F, research: PDResearch });
+      if (pdaEngine) pdaEngine.start([sym]);
+      research[sym] = PDResearch.read(sym, iv => F.candles(sym, iv), Date.now(), /coinbase/i.test(F.source) ? 'coinbase' : 'kraken');
+    } catch (e) { console.warn(e); }
     return research[sym] || null;
   }
   function renderResearch(sym) {
@@ -1234,7 +1239,9 @@
       const form = s.forming.length ? `<div class="small mu">forming: ${s.forming.map(f => lbl(f.pattern)).join(', ')}</div>` : '';
       const ups = s.setups.map(x => `<span class="${x.dir === 'long' ? 'bull' : 'bear'}">${x.dir} ${x.status}</span> @${px(x.level)}${x.invalidation != null ? ' · invalid ' + px(x.invalidation) : ''}`).join('<br>') || '<span class=mu>none</span>';
       return `<tr><td>${C.tfName(tf)}</td><td class="${cls(s.bias)}">${lbl(s.bias)}${s.lastChange ? `<div class="small mu">was ${lbl(s.lastChange.from)}, ${fmtTime(s.lastChange.time)}</div>` : ''}</td><td class=small>${pats}${form}</td><td class=small>${ups}</td></tr>`; }).join('');
-    box.innerHTML = `<table><tr><th>TF</th><th>Structure</th><th>Patterns (last 3 bars)</th><th>Break &amp; retest</th></tr>${rows}</table>
+    const provenance = pdaEngine && pdaEngine.get(sym);
+    const provenanceLine = provenance ? `<p class="small mu">PDA feed gate: ${esc(provenance.status)} · ${esc(provenance.venue)} · ${PDResearch.TFS.map(tf => `${C.tfName(tf)} ${esc(provenance.timeframes[tf].status)}`).join(' / ')}. Read-only; no order authority.</p>` : '';
+    box.innerHTML = provenanceLine + `<table><tr><th>TF</th><th>Structure</th><th>Patterns (last 3 bars)</th><th>Break &amp; retest</th></tr>${rows}</table>
       <p class="small mu">Engine v${esc(rd.version)} on closed ${esc(F.demo ? 'DEMO (made-up)' : /coinbase/i.test(F.source) ? 'Coinbase' : 'Kraken')} candles, updated ${fmtTime(rd.at)}. "Forming" is provisional until the candle closes. Each timeframe stands alone; nothing here is averaged into a score.
       * relaxed variant (looser gap rule). Untested: no replay results yet. Flows and liquidation maps are not in this read. Size only through "Weigh it".</p>`;
   }
