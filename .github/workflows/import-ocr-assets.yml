@@ -3,6 +3,7 @@ name: Import OCR runtime assets
 on:
   push:
     branches: ["pda/app-clone-today"]
+    paths: [".github/workflows/import-ocr-assets.yml"]
 
 permissions:
   contents: write
