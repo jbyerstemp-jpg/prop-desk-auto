@@ -56,7 +56,7 @@
       const exitFee = exit * p.quantity * 0.0026;
       const netPnl = gross - p.entryFee - exitFee;
       state.closed.push({ id: p.id, symbol: p.symbol, entry: p.entry, exit: round(exit), quantity: p.quantity, stop: p.stop,
-        target: p.target, openedAt: p.openedAt, closedAt: clock(), day: new Date(p.openedAt).toISOString().slice(0, 10),
+        target: p.target, openedAt: p.openedAt, closedAt: clock(), day: new Date(clock()).toISOString().slice(0, 10),
         reason, grossPnl: round(gross), fees: round(p.entryFee + exitFee), netPnl: round(netPnl), riskUsd: p.riskUsd });
       state.events.push({ at: clock(), type: 'paper_position_closed', reason, netPnl: round(netPnl) });
       state.open = null; persist();
@@ -78,7 +78,7 @@
       if (state.open) {
         const mark = quote.bid;
         state.open.unrealized = round((mark - state.open.entry) * state.open.quantity - state.open.entryFee - mark * state.open.quantity * 0.0026);
-        if (mark <= state.open.stop) close(state.open.stop, 'stop');
+        if (mark <= state.open.stop) close(Math.min(state.open.stop, mark), 'stop');
         else if (mark >= state.open.target) close(state.open.target, 'target');
         else persist();
         return snapshot();

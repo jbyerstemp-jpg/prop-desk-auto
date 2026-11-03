@@ -23,3 +23,5 @@ jobs:
       - run: node tests/research-model.test.js
       - run: node tests/pda-engine.test.js
       - run: node tests/pda-autopilot.test.js
+      - run: node --check js/app.js
+      - run: node --check js/pda-autopilot.js
