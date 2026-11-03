@@ -25,6 +25,8 @@ function makeBlankPng(width, height) {
     assert.match(await page.locator('#paperBox').innerText(), /Separate personal-capital paper ledger/);
     await page.locator('#pdaToggle').click();
     assert.match(await page.locator('#paperBox').innerText(), /Enabled · paper only/);
+    await page.waitForFunction(() => document.querySelector('#paperBox')?.innerText.includes('demo blocked'));
+    assert.match(await page.locator('#paperBox').innerText(), /demo blocked/);
     await page.locator('[data-pda-mode="prop_evaluation"]').click();
     assert.match(await page.locator('#paperBox').innerText(), /Prop Evaluation mode/);
     await page.locator('[data-pda-mode="personal_capital"]').click();
