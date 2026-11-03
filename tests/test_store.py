@@ -14,9 +14,9 @@ def candle(close: str = "101") -> CandleRecord:
         symbol="BTC/USD",
         timeframe="15m",
         open_time=datetime(2026, 11, 3, 12, tzinfo=UTC),
-        open=Decimal("100"),
-        high=max(Decimal("102"), Decimal(close)),
-        low=Decimal("99"),
+        open=Decimal(100),
+        high=max(Decimal(102), Decimal(close)),
+        low=Decimal(99),
         close=Decimal(close),
         volume=Decimal("12.5"),
         source="kraken_spot_ohlc",
@@ -40,10 +40,10 @@ def test_duckdb_separates_venues_and_symbols(tmp_path) -> None:
         symbol="SOL/USDC",
         timeframe="15m",
         open_time=kraken.open_time,
-        open=Decimal("100"),
-        high=Decimal("102"),
-        low=Decimal("99"),
-        close=Decimal("101"),
+        open=Decimal(100),
+        high=Decimal(102),
+        low=Decimal(99),
+        close=Decimal(101),
         volume=Decimal("12.5"),
         source="raydium_pool",
     )
@@ -57,14 +57,13 @@ def test_candle_record_rejects_bad_times_and_ranges() -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
         CandleRecord(
             venue=Venue.KRAKEN, symbol="BTC/USD", timeframe="15m",
-            open_time=datetime(2026, 11, 3), open=Decimal("100"), high=Decimal("102"),
-            low=Decimal("99"), close=Decimal("103"), volume=Decimal(1), source="test",
+            open_time=datetime(2026, 11, 3), open=Decimal(100), high=Decimal(102),
+            low=Decimal(99), close=Decimal(103), volume=Decimal(1), source="test",
         )
     with pytest.raises(ValueError, match="high/low"):
         replace(candle(), low=Decimal("100.5"))
 
 
 def test_fetch_limit_is_bounded(tmp_path) -> None:
-    with DuckDBStore(tmp_path / "research.duckdb") as store:
-        with pytest.raises(ValueError, match="limit"):
-            store.fetch_candles(Venue.KRAKEN, "BTC/USD", "15m", limit=0)
+    with DuckDBStore(tmp_path / "research.duckdb") as store, pytest.raises(ValueError, match="limit"):
+        store.fetch_candles(Venue.KRAKEN, "BTC/USD", "15m", limit=0)

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import Self
 
 from pda.models import Venue
 
@@ -133,7 +134,7 @@ class DuckDBStore:
     def close(self) -> None:
         self._db.close()
 
-    def __enter__(self) -> DuckDBStore:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: object) -> None:
