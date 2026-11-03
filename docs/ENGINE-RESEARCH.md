@@ -102,3 +102,8 @@ The repositories are engineering references; PDA should not copy large codebases
 - Demo data is never counted as live-market paper performance.
 - A backtest, a pattern observation, or a model score is not proof of future profitability.
 - Keep the original Prop Desk repositories untouched; work only in the PDA repository/branch.
+
+
+## PDA implementation update (Nov 3, 2026)
+
+PDA now has a dependency-free, read-only Solana JSON-RPC adapter (`src/pda/solana_rpc.py`) for health, slot, token-supply, and account-data reads. It deliberately exposes no signing, transaction, or wallet APIs. This is the first Solana data-ingestion seam; Raydium and Orca pool parsing/swaps remain unimplemented. Raydium SDK V2's GPL-3.0 and Orca's noncommercial license still require a separate integration decision before importing their SDK code. Public RPC rate limits must be handled before production use.

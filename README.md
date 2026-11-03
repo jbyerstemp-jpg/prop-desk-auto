@@ -15,6 +15,7 @@ PDA is a research-first, dual-market trading platform for Kraken (centralized ex
 - `index.html`, `css/app.css`, and `js/app.js`: standalone cloned interface.
 - `js/feed.js`: public Kraken spot/futures data with explicitly labeled Coinbase fallback and synthetic demo mode.
 - `js/pda-engine.js`: read-only data-quality/provenance gate for the research model.
+- `src/pda/solana_rpc.py`: dependency-free, read-only Solana JSON-RPC adapter (no signing or transaction submission).
 - `js/pda-autopilot.js`: separate Personal Capital browser-session paper engine; never sends venue orders.
 - `monitor/`: scorecard, traits, market-profile data, and the optional 24/7 read-only prop-account monitor (`.github/workflows/monitor.yml`, `MONITOR-SETUP.md`).
 - `vendor/tesseract/`: pinned OCR runtime and English trained data for screenshot import.
