@@ -1103,12 +1103,29 @@
       <label class=small style="display:inline-flex;gap:4px;align-items:center"><input type=checkbox id=trendChart ${T().trendOnChart ? 'checked' : ''}> Show trend paper positions on the chart</label>
       <p class="small mu">Small edge (+0.07R a trade), mostly from longs, weaker since 2021, and drawdowns too deep for a 3% evaluation: a funded/own-money idea, not an eval tool. No alerts or sizing until 30+ paper trades and your ★. Research, not financial advice.</p></div>`;
   }
+
+  const pdaAuto = window.PDAAutoPaper ? window.PDAAutoPaper.create({ feed: F }) : null;
+  function pdaModeCard() {
+    if (!pdaAuto) return '';
+    const x = pdaAuto.snapshot(), personal = T().accountMode === 'personal_capital', p = x.open;
+    const trades = x.closed.slice().reverse().slice(0, 8);
+    let html = '<div class=card><h3>PDA account mode</h3><div class=row><button class="btn ' + (!personal ? 'pri' : '') + '" data-pda-mode="prop_evaluation">Prop Evaluation</button><button class="btn ' + (personal ? 'pri' : '') + '" data-pda-mode="personal_capital">Personal Capital</button></div>';
+    if (!personal) return html + '<p class=small>Prop Evaluation mode is a planning and manual-journal workspace. PDA does not automatically execute prop-firm trades or copy orders. Firm rules must be checked before using any external execution method.</p></div>';
+    html += '<p class=small>Separate personal-capital paper ledger. Autonomous mode uses simulated fills only; no exchange orders, wallet signing, or real-money access. The experimental strategy is not validated.</p>';
+    html += '<div class=kv><div><span>Paper equity</span><b>' + usd(x.equity) + '</b></div><div><span>Realized P&amp;L</span><b class="' + (x.realizedPnl >= 0 ? 'up' : 'dn') + '">' + usd(x.realizedPnl) + '</b></div><div><span>Today P&amp;L</span><b>' + usd(x.todayPnl) + '</b></div><div><span>Autopilot</span><b class="' + (x.config.enabled ? 'up' : 'warn') + '">' + (x.config.enabled ? 'Enabled · paper only' : 'Paused') + '</b></div></div>';
+    html += '<div class=form><label>Starting capital (USD)<input id=pdaCapital type=number min=100 step=100 value="' + x.config.capital + '"></label><label>Risk per trade (%)<input id=pdaRisk type=number min=0.01 max=0.5 step=0.01 value="' + x.config.riskPct + '"></label><label>Daily loss stop (%)<input id=pdaDaily type=number min=0.1 max=2 step=0.1 value="' + x.config.dailyLossPct + '"></label><label>Market<select id=pdaSymbol>' + ['BTC/USD','ETH/USD','SOL/USD','XRP/USD'].map(s => '<option ' + (s === x.config.symbol ? 'selected' : '') + '>' + s + '</option>').join('') + '</select></label></div>';
+    html += '<div class=row style="margin-top:8px"><button class="btn pri" id=pdaSave>Save settings</button><button class="btn ' + (x.config.enabled ? 'bad' : 'pri') + '" id=pdaToggle>' + (x.config.enabled ? 'Pause autopilot' : 'Enable paper autopilot') + '</button><span class=small id=pdaStatus></span></div>';
+    html += '<p class=small>Entry rule: experimental 15m EMA 9/21 bullish cross, 2× ATR stop, 2R target, long-only. Max notional 10% of equity, max 0.5% risk/trade, daily loss stop ≤2%, three trades/day. Requires live Kraken ticker and fresh 15m candles. Fees 0.26%/side plus 5bp simulated slippage. Stop is prioritized over target. This is a test harness, not a validated strategy.</p>';
+    html += '<h4>Open personal paper position</h4>' + (p ? '<p class=small><b>' + esc(p.symbol) + ' long</b> · ' + p.quantity + ' @ ' + px(p.entry) + ' · stop ' + px(p.stop) + ' · target ' + px(p.target) + '</p>' : '<p class="small mu">None.</p>');
+    html += '<h4>Recent personal paper trades</h4>' + (trades.length ? '<table><tr><th>Market</th><th>Exit</th><th class=num>Net P&amp;L</th></tr>' + trades.map(t => '<tr><td>' + esc(t.symbol) + '</td><td>' + esc(t.reason) + ' @ ' + px(t.exit) + '</td><td class=num>' + usd(t.netPnl) + '</td></tr>').join('') + '</table>' : '<p class="small mu">No closed personal paper trades yet.</p>');
+    return html + '</div>';
+  }
   function renderPaper() {
     const box = $('#paperBox'); if (!box) return;
     const open = S.paper.filter(t => t.status === 'open' || t.status === 'pending'), closed = S.paper.filter(t => t.status === 'closed').sort((a, b) => b.closed - a.closed), st = C.paperStats(S.paper);
     const r = x => x == null ? '—' : (x >= 0 ? '+' : '') + x.toFixed(2) + 'R', cls = x => x > 0 ? 'up' : x < 0 ? 'dn' : '';
     const srows = Object.entries(st).map(([k, x]) => `<tr><td>${esc(k)}</td><td class=num>${x.n}</td><td class=num>${x.win == null ? '—' : Math.round(x.win * 100) + '%'}</td><td class="num ${cls(x.avgR)}">${r(x.avgR)}</td><td class="num ${cls(x.totalR)}">${r(x.totalR)}</td></tr>`).join('');
-    box.innerHTML = scorecardHtml() + trendCardHtml() + trendPortCardHtml(trendForward()) + `<div class=card><h3>Paper trading <span class=tag>no money, builds the record</span></h3>
+    box.innerHTML = pdaModeCard() + scorecardHtml() + trendCardHtml() + trendPortCardHtml(trendForward()) + `<div class=card><h3>Paper trading <span class=tag>no money, builds the record</span></h3>
       <p class=small>Add setups from the Chart tab ("Setups to watch") or the Coach ("Other setups"). Each one opens at the live price, then closes by itself at its stop or target, checked against the candles even while the app is closed (a candle touching both counts as the stop). Results are in R after fees and swap, the same rules as the replay test.</p>
       ${paperAcctCard()}
       <p class="small mu">${esc(paperMsg || (ghToken() ? 'Saved to monitor/paper.json in your repo.' : 'Kept on this phone. Add the 24/7 monitor key in Settings to also save it to your repo.'))}</p></div>
@@ -2144,7 +2161,7 @@
   }
   // Don't redraw a form while the user is typing in it.
   const typing = () => { const el = document.activeElement; return !$('#modal').hidden || (el && /INPUT|TEXTAREA|SELECT/.test(el.tagName) && tab !== 'chart'); };
-  F.on(() => { if (!typing()) renderAll(false); });
+  F.on(() => { if (pdaAuto && T().accountMode === 'personal_capital') pdaAuto.tick(); if (!typing()) renderAll(false); });
   setInterval(() => { if (!typing()) renderAll(false); }, 3000);
 
   const demo = /[?&]demo\b/.test(location.search);
