@@ -1,10 +1,19 @@
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
+const zlib = require('node:zlib');
+function makeBlankPng(width, height) {
+  const crc32 = data => { let c = 0xffffffff; for (const b of data) { c ^= b; for (let k=0;k<8;k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); } return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (name, data) => { const type=Buffer.from(name), len=Buffer.alloc(4), crc=Buffer.alloc(4); len.writeUInt32BE(data.length); crc.writeUInt32BE(crc32(Buffer.concat([type,data]))); return Buffer.concat([len,type,data,crc]); };
+  const ihdr=Buffer.alloc(13); ihdr.writeUInt32BE(width,0); ihdr.writeUInt32BE(height,4); ihdr[8]=8; ihdr[9]=6;
+  const raw=Buffer.alloc(height*(1+width*4)); for(let y=0;y<height;y++) { const row=y*(1+width*4); raw[row]=0; for(let x=0;x<width;x++) raw.fill(255,row+1+x*4,row+1+x*4+4); }
+  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',zlib.deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]);
+}
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  const pageErrors = [];
+  const pageErrors = [], browserLogs = [];
+  page.on('console', msg => { if (msg.type() === 'error') browserLogs.push(msg.text()); });
   page.on('pageerror', error => pageErrors.push(error.message));
   page.on('dialog', dialog => dialog.accept());
   try {
@@ -21,14 +30,14 @@ const { chromium } = require('playwright');
     await page.locator('[data-pda-mode="personal_capital"]').click();
     assert.match(await page.locator('#paperBox').innerText(), /Paused/);
     await page.locator('[data-tab="pos"]').click();
-    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p1sAAAAASUVORK5CYII=', 'base64');
+    const png = makeBlankPng(32, 32);
     await page.locator('#impFiles').setInputFiles({ name: 'blank.png', mimeType: 'image/png', buffer: png });
     await page.waitForFunction(() => {
       const t = document.querySelector('#impStatus')?.textContent || '';
       return t.includes('Nothing recognisable') || t.includes("Couldn't read the screenshot");
     }, { timeout: 90000 });
     const ocrStatus = await page.locator('#impStatus').innerText();
-    assert.match(ocrStatus, /Nothing recognisable/, 'Tesseract must load and recognize a blank image without runtime errors');
+    assert.match(ocrStatus, /Nothing recognisable/, 'Tesseract must load and recognize a valid blank PNG; status=' + ocrStatus + '; console=' + browserLogs.join(' | '));
     assert.deepEqual(pageErrors, [], 'app must not throw uncaught browser errors');
     console.log('PDA browser smoke: account modes, paper-only toggle, and OCR runtime passed');
   } finally {

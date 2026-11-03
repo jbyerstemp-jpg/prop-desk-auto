@@ -1645,7 +1645,7 @@
         st.textContent = `Reading screenshot ${i + 1} of ${files.length}… (first time downloads the reader, ~7 MB)`;
         texts.push(await ocr(files[i])); newest = Math.max(newest, files[i].lastModified || 0);
       }
-    } catch (e) { st.innerHTML = `<span class=dn>Couldn't read the screenshot: ${esc(e.message)}</span>`; return; }
+    } catch (e) { console.error('OCR import failed', e); st.innerHTML = `<span class=dn>Couldn't read the screenshot: ${esc(e && e.message ? e.message : String(e))}</span>`; return; }
     showImport(texts.join('\n'), newest || Date.now());
     autoSample(lastImport && lastImport.r, texts.join('\n'));
   }
