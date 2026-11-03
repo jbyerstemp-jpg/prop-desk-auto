@@ -20,6 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - run: test -s vendor/tesseract/tesseract-core-lstm.wasm.js
+      - run: test -s vendor/tesseract/tesseract-core-simd-lstm.wasm.js
+      - run: gzip -t vendor/tesseract/lang/eng.traineddata.gz
       - run: node tests/research-model.test.js
       - run: node tests/pda-engine.test.js
       - run: node tests/pda-autopilot.test.js

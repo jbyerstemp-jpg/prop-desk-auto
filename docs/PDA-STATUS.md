@@ -15,7 +15,7 @@ It fails closed unless the feed is live Kraken, the quote is no more than 15 sec
 
 ## Validation status
 
-CI covers Python unit tests and lint, research-model contracts, PDA feed-gate contracts, autopilot entry/exit/persistence/venue/freshness checks, and JavaScript syntax checks. CI is not a substitute for a manual browser/device smoke test. OCR assets are incomplete in the current app clone; screenshot import is not considered validated.
+CI covers Python unit tests and lint, research-model contracts, PDA feed-gate contracts, autopilot entry/exit/persistence/venue/freshness checks, and JavaScript syntax checks. CI is not a substitute for a manual browser/device smoke test. The pinned Tesseract runtime and English language data have been restored. Screenshot OCR still needs a manual browser/device smoke test before it is considered validated.
 
 ## Next engineering gates
 
