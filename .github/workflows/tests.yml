@@ -17,3 +17,7 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest
       - run: ruff check src tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tests/research-model.test.js
