@@ -30,5 +30,9 @@ jobs:
       - run: node --check js/pda-autopilot.js
       - run: npm install --no-save playwright
       - run: npx playwright install --with-deps chromium
-      - run: python3 -m http.server 4173 > /tmp/pda-http.log 2>&1 & echo $! > /tmp/pda-http.pid
-      - run: node tests/browser-smoke.js
+      - run: |
+          python3 -m http.server 4173 > /tmp/pda-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 2
+          node tests/browser-smoke.js
