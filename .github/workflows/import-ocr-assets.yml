@@ -1,0 +1,50 @@
+name: Import OCR runtime assets
+
+on:
+  push:
+    branches: ["pda/app-clone-today"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pda-ocr-assets
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pda/app-clone-today
+      - name: Restore pinned Tesseract runtime and English language data
+        env:
+          SOURCE_REV: ed3aafc7ba820bd2f2c347e3859f428060332667
+        run: |
+          set -euo pipefail
+          dest="vendor/tesseract"
+          mkdir -p "$dest/lang"
+          base="https://raw.githubusercontent.com/jbyerstemp-jpg/prop-desk/\${SOURCE_REV}/vendor/tesseract"
+          files=(
+            "tesseract-core-lstm.wasm.js"
+            "tesseract-core-simd-lstm.wasm.js"
+            "lang/eng.traineddata.gz"
+            "LICENSE-tesseract-core"
+            "LICENSE-tesseract.js.md"
+          )
+          for file in "\${files[@]}"; do
+            if [ ! -s "$dest/$file" ]; then
+              curl --fail --location --retry 3 --silent --show-error "$base/$file" -o "$dest/$file"
+            fi
+          done
+          test "$(wc -c < "$dest/tesseract-core-lstm.wasm.js")" -gt 3000000
+          test "$(wc -c < "$dest/tesseract-core-simd-lstm.wasm.js")" -gt 3000000
+          test "$(wc -c < "$dest/lang/eng.traineddata.gz")" -gt 2000000
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$dest"
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: restore pinned Tesseract OCR runtime"
+            git push origin "HEAD:\${GITHUB_REF_NAME}"
+          fi
