@@ -28,7 +28,7 @@
     const persist = () => { try { store.setItem(KEY, JSON.stringify(state)); } catch (_) { state.config.enabled = false; } };
     const dayKey = () => new Date(clock()).toISOString().slice(0, 10);
     const todayTrades = () => state.closed.filter(t => t.day === dayKey());
-    const todayPnl = () => todayTrades().reduce((sum, t) => sum + t.netPnl, 0);
+    const todayPnl = () => todayTrades().reduce((sum, t) => sum + t.netPnl, 0) + (state.open ? state.open.unrealized || 0 : 0);
     const equity = () => state.config.capital + state.closed.reduce((sum, t) => sum + t.netPnl, 0) + (state.open ? state.open.unrealized || 0 : 0);
     function snapshot() {
       return JSON.parse(JSON.stringify({ config: state.config, open: state.open, closed: state.closed.slice(-100), events: state.events.slice(-20),
