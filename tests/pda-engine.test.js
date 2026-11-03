@@ -1,12 +1,20 @@
 const assert = require('node:assert/strict');
 const PDAEngine = require('../js/pda-engine.js');
 
+const NOW = 1_700_000_000_000;
+function bars(tf) {
+  const interval = tf * 60;
+  return Array.from({ length: 80 }, (_, i) => {
+    const open = 100 + i * 0.1;
+    return { time: NOW / 1000 - (79 - i) * interval - interval, open, high: open + 1, low: open - 1, close: open + 0.5 };
+  });
+}
 function harness(overrides = {}) {
   let listener;
   const calls = [];
   const feed = {
     source: 'Kraken', status: 'live', demo: false,
-    candles: () => [], candleAge: () => 2,
+    candles: (_symbol, tf) => bars(tf),
     want: (symbol, tfs) => calls.push([symbol, tfs]),
     on: fn => { listener = fn; },
     ...overrides
@@ -14,13 +22,14 @@ function harness(overrides = {}) {
   const research = {
     TFS: [15, 60],
     read: (symbol, candlesFor, now, venue) => ({
-      version: 'test-model', venue, tfs: {
+      version: 'test-model', symbol, now, venue,
+      tfs: {
         15: { status: 'ready', bias: 'bullish' },
         60: { status: 'ready', bias: 'bearish' }
       }
     })
   };
-  const engine = PDAEngine.create({ feed, research, clock: () => 1000 });
+  const engine = PDAEngine.create({ feed, research, clock: () => NOW });
   return { engine, feed, calls, tick: () => listener && listener() };
 }
 
@@ -48,7 +57,7 @@ function harness(overrides = {}) {
   assert.equal(record.timeframes[15].observation, null);
 }
 {
-  const h = harness({ candleAge: () => 99999 });
+  const h = harness({ candles: () => [] });
   const [record] = h.engine.start(['BTC/USD']);
   assert.equal(record.timeframes[15].status, 'stale');
   assert.equal(record.timeframes[15].observation, null);
